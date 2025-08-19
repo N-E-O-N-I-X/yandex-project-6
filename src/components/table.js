@@ -15,12 +15,12 @@ export function initTable(settings, onAction) {
     // @todo: #1.2 —  вывести дополнительные шаблоны до и после таблицы
 
     (before ?? []).slice().reverse().forEach(subName => {     
-        root[subName] = cloneTemplate(subName);   // сохранить объект в root
+        root[subName] = cloneTemplate(subName);
         root.container.prepend(root[subName].container);
     });
 
     (after ?? []).forEach(subName => {  
-        root[subName] = cloneTemplate(subName);   // сохранить объект в root
+        root[subName] = cloneTemplate(subName);
         root.container.append(root[subName].container);
     });
 
