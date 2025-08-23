@@ -11,6 +11,8 @@ import {initTable} from "./components/table.js";
 
 import { initSorting } from "./components/sorting.js";
 
+import { initFiltering } from "./components/filtering.js";
+
 import {initPagination} from "./components/pagination.js";
 
 // Исходные данные используемые в render()
@@ -43,6 +45,8 @@ function render(action) {
 
     result = applySorting(result, state, action);
 
+    result = applyFiltering(result, state, action);
+
     result = applyPagination(result, state, action);
 
     sampleTable.render(result);
@@ -51,11 +55,15 @@ function render(action) {
 const sampleTable = initTable({
     tableTemplate: 'table',
     rowTemplate: 'row',
-    before: ['header'],
+    before: ['header', 'filter'],
     after: ['pagination']
 }, render);
 
 // @todo: инициализация
+
+const applyFiltering = initFiltering(sampleTable.filter.elements, {    // передаём элементы фильтра
+    searchBySeller: indexes.sellers                                    // для элемента с именем searchBySeller устанавливаем массив продавцов
+});
 
 const applySorting = initSorting([ // Нам нужно передать сюда массив элементов, которые вызывают сортировку, чтобы изменять их визуальное представление
     sampleTable.header.elements.sortByDate,
