@@ -9,6 +9,8 @@ import {processFormData} from "./lib/utils.js";
 import {initTable} from "./components/table.js";
 // @todo: подключение
 
+import { initSearching } from "./components/searching.js";
+
 import { initSorting } from "./components/sorting.js";
 
 import { initFiltering } from "./components/filtering.js";
@@ -55,7 +57,7 @@ function render(action) {
 const sampleTable = initTable({
     tableTemplate: 'table',
     rowTemplate: 'row',
-    before: ['header', 'filter'],
+    before: ['search', 'header', 'filter'],
     after: ['pagination']
 }, render);
 
