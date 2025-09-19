@@ -42,17 +42,17 @@ function collectState() {
  */
 async function render(action) {
     let state = collectState(); // состояние полей из таблицы
-    let query = {}; // пустой запрос для последующего использования с API
+    let query = {}; // здесь будут формироваться параметры запроса
+    // другие apply*
+    // result = applySearching(result, state, action);
+    // result = applyFiltering(result, state, action);
+    // result = applySorting(result, state, action);
+    query = applyPagination(query, state, action); // обновляем query
 
-    // Применяем сортировку, фильтрацию и пагинацию
-    let result = await api.getRecords(query); // получаем данные с сервера
+    const { total, items } = await api.getRecords(query); // запрашиваем данные с собранными параметрами
 
-    // Применяем фильтрацию, сортировку и пагинацию
-    result.items = applySorting(result.items, state, action);
-    result.items = applyFiltering(result.items, state, action);
-    result.items = applyPagination(result.items, state, action);
-
-    sampleTable.render(result.items); // передаем только items
+    updatePagination(total, query); // перерисовываем пагинатор
+    sampleTable.render(items);
 }
 
 // Асинхронная инициализация данных
@@ -60,10 +60,10 @@ async function init() {
     const indexes = await api.getIndexes(); // получаем индексы (продавцы и покупатели)
     
     // Настроим фильтры с использованием данных из API
-    applyFiltering = initFiltering(sampleTable.filter.elements, {
-        searchBySeller: indexes.sellers, // передаём продавцов
-        searchByCustomer: indexes.customers // передаём покупателей
-    });
+    // applyFiltering = initFiltering(sampleTable.filter.elements, {
+    //     searchBySeller: indexes.sellers, // передаём продавцов
+    //     searchByCustomer: indexes.customers // передаём покупателей
+    // });
 
     // Перерисуем таблицу после инициализации
     render();
@@ -84,7 +84,7 @@ const applySorting = initSorting([ // Нам нужно передать сюд�
 ]);
 
 // Инициализация пагинации
-const applyPagination = initPagination(
+const {applyPagination, updatePagination} = initPagination(
     sampleTable.pagination.elements,  // передаём сюда элементы пагинации, найденные в шаблоне
     (el, page, isCurrent) => {   // и колбэк, чтобы заполнять кнопки страниц данными
         const input = el.querySelector('input');

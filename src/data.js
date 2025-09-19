@@ -1,48 +1,59 @@
+import {makeIndex} from "./lib/utils.js";
+
 const BASE_URL = 'https://webinars.webdev.education-services.ru/sp7-api';
 
-// Функция для получения индексов (продавцы, покупатели)
+export function initData(sourceData) {
+    // переменные для кеширования данных
+let sellers;
+let customers;
+let lastResult;
+let lastQuery;
+
+// функция для приведения строк в тот вид, который нужен нашей таблице
+const mapRecords = (data) => data.map(item => ({
+    id: item.receipt_id,
+    date: item.date,
+    seller: sellers[item.seller_id],
+    customer: customers[item.customer_id],
+    total: item.total_amount
+}));
+
+// функция получения индексов
 const getIndexes = async () => {
-    // Загружаем данные с сервера, если они еще не загружены
-    const sellersResponse = await fetch(`${BASE_URL}/sellers`);
-    const customersResponse = await fetch(`${BASE_URL}/customers`);
-    
-    const sellers = await sellersResponse.json();
-    const customers = await customersResponse.json();
+    if (!sellers || !customers) { // если индексы ещё не установлены, то делаем запросы
+        [sellers, customers] = await Promise.all([ // запрашиваем и деструктурируем в уже объявленные ранее переменные
+            fetch(`${BASE_URL}/sellers`).then(res => res.json()), // запрашиваем продавцов
+            fetch(`${BASE_URL}/customers`).then(res => res.json()), // запрашиваем покупателей
+        ]);
+    }
 
-    // Создаем индекс из полученных данных
-    const sellersIndex = makeIndex(sellers, 'id', v => `${v.first_name} ${v.last_name}`);
-    const customersIndex = makeIndex(customers, 'id', v => `${v.first_name} ${v.last_name}`);
+    return { sellers, customers };
+}
 
-    return { sellers: sellersIndex, customers: customersIndex };
-};
+// функция получения записей о продажах с сервера
+const getRecords = async (query, isUpdated = false) => {
+        const qs = new URLSearchParams(query); // преобразуем объект параметров в SearchParams объект, представляющий query часть url
+        const nextQuery = qs.toString(); // и приводим к строковому виду
 
-// Функция для получения записей (продаж)
-const getRecords = async (query) => {
-    const qs = new URLSearchParams(query);
-    const nextQuery = qs.toString(); // Преобразуем параметры в строку
+        if (lastQuery === nextQuery && !isUpdated) { // isUpdated параметр нужен, чтобы иметь возможность делать запрос без кеша
+            return lastResult; // если параметры запроса не поменялись, то отдаём сохранённые ранее данные
+        }
 
-    // Выполняем запрос к серверу для получения записей о продажах
-    const response = await fetch(`${BASE_URL}/records?${nextQuery}`);
-    const records = await response.json();
+        // если прошлый квери не был ранее установлен или поменялись параметры, то запрашиваем данные с сервера
+        const response = await fetch(`${BASE_URL}/records?${nextQuery}`);
+        const records = await response.json();
 
-    // Преобразуем данные в нужный формат
-    const result = {
-        total: records.total,
-        items: records.items.map(item => ({
-            id: item.receipt_id,
-            date: item.date,
-            seller: sellers[item.seller_id],
-            customer: customers[item.customer_id],
-            total: item.total_amount
-        }))
+        lastQuery = nextQuery; // сохраняем для следующих запросов
+        lastResult = {
+            total: records.total,
+            items: mapRecords(records.items)
+        };
+
+        return lastResult;
     };
 
-    return result;
+return {
+    getIndexes,
+    getRecords
 };
-
-export function initData() {
-    return {
-        getIndexes,
-        getRecords
-    };
 }
