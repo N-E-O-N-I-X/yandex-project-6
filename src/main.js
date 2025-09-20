@@ -49,7 +49,7 @@ async function render(action) {
     // result = applySorting(result, state, action);
     query = applyPagination(query, state, action); // обновляем query
     query = applyFiltering(query, state, action); // result заменяем на query
-    // query = applySearching(query, state, action); // result заменяем на query
+    query = applySearching(query, state, action); // result заменяем на query
     query = applySorting(query, state, action); // result заменяем на query
 
     const { total, items } = await api.getRecords(query); // запрашиваем данные с собранными параметрами
@@ -98,6 +98,9 @@ const {applyPagination, updatePagination} = initPagination(
 
 const { applyFiltering, updateIndexes } = initFiltering(sampleTable.filter.elements);
 
+const applySearching = initSearching(
+    sampleTable.header.elements.search
+)
 
 // Запуск инициализации
 const appRoot = document.querySelector('#app');
