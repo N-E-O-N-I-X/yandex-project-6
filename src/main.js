@@ -48,6 +48,7 @@ async function render(action) {
     // result = applyFiltering(result, state, action);
     // result = applySorting(result, state, action);
     query = applyPagination(query, state, action); // обновляем query
+    query = applyFiltering(query, state, action); // result заменяем на query
 
     const { total, items } = await api.getRecords(query); // запрашиваем данные с собранными параметрами
 
@@ -57,16 +58,13 @@ async function render(action) {
 
 // Асинхронная инициализация данных
 async function init() {
-    const indexes = await api.getIndexes(); // получаем индексы (продавцы и покупатели)
-    
-    // Настроим фильтры с использованием данных из API
-    // applyFiltering = initFiltering(sampleTable.filter.elements, {
-    //     searchBySeller: indexes.sellers, // передаём продавцов
-    //     searchByCustomer: indexes.customers // передаём покупателей
-    // });
+    const indexes = await api.getIndexes();
 
-    // Перерисуем таблицу после инициализации
-    render();
+    updateIndexes(sampleTable.filter.elements, {
+        searchBySeller: indexes.sellers
+    });
+
+    render()
 }
 
 // Инициализация таблицы с рендером
@@ -95,6 +93,9 @@ const {applyPagination, updatePagination} = initPagination(
         return el;
     }
 );
+
+const { applyFiltering, updateIndexes } = initFiltering(sampleTable.filter.elements);
+
 
 // Запуск инициализации
 const appRoot = document.querySelector('#app');
